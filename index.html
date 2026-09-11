@@ -711,6 +711,11 @@ svg.leaflet-image-layer.leaflet-interactive path {
   }
   .cell .value .unit { font-size: 13px; font-weight: 400; color: #8b949e; letter-spacing: 0; }
   #v-time { font-size: 28px; }
+  .cell.span-2 { grid-column: 1 / -1; }
+  #v-speed { font-size: 44px; }
+  #cell-hr { cursor: pointer; }
+  #cell-hr.disconnected .label::after { content: " · 点按连接"; color: #484f58; font-size: 11px; }
+  #cell-hr.connected .label { color: #ff6b6b; }
 
   /* 按钮区 */
   #controls {
@@ -760,10 +765,11 @@ svg.leaflet-image-layer.leaflet-interactive path {
 </div>
 
 <div id="dash">
-  <div class="cell"><span class="label">实时速度</span><span class="value" id="v-speed">0.0<span class="unit"> km/h</span></span></div>
+  <div class="cell span-2"><span class="label">实时速度</span><span class="value" id="v-speed">0.0<span class="unit"> km/h</span></span></div>
   <div class="cell"><span class="label">平均速度</span><span class="value" id="v-avg">0.0<span class="unit"> km/h</span></span></div>
   <div class="cell"><span class="label">距离</span><span class="value" id="v-dist">0.00<span class="unit"> km</span></span></div>
   <div class="cell"><span class="label">骑行时间</span><span class="value" id="v-time">00:00:00</span></div>
+  <div class="cell disconnected" id="cell-hr"><span class="label">心率</span><span class="value" id="v-hr">--<span class="unit"> bpm</span></span></div>
 </div>
 
 <div id="controls">
@@ -979,6 +985,59 @@ svg.leaflet-image-layer.leaflet-interactive path {
     document.getElementById('v-time').textContent = hh + ':' + mm + ':' + ss;
   }
   setInterval(updateDash, 1000);
+
+  // ---------- BLE 心率 ----------
+  var hrCell = document.getElementById('cell-hr');
+  var hrValue = document.getElementById('v-hr');
+  var hrDevice = null;
+
+  function setHr(bpm) {
+    hrValue.innerHTML = bpm + '<span class="unit"> bpm</span>';
+  }
+  function hrDisconnected() {
+    hrDevice = null;
+    hrCell.classList.add('disconnected');
+    hrCell.classList.remove('connected');
+    setHr('--');
+    setStatus('心率带已断开,点按心率格重连');
+  }
+
+  // 心率测量特征值解析:flags 位0 决定 8/16 位格式
+  function parseHr(dv) {
+    return (dv.getUint8(0) & 0x1) ? dv.getUint16(1, true) : dv.getUint8(1);
+  }
+
+  async function connectHr() {
+    if (hrDevice && hrDevice.gatt.connected) return;
+    if (!('bluetooth' in navigator)) {
+      setStatus('此浏览器不支持蓝牙心率,需手机 Chrome 并用 HTTPS 打开');
+      return;
+    }
+    try {
+      setStatus('正在搜索心率带…');
+      var device = await navigator.bluetooth.requestDevice({
+        filters: [{ services: ['heart_rate'] }]
+      });
+      device.addEventListener('gattserverdisconnected', hrDisconnected);
+      var server = await device.gatt.connect();
+      var svc = await server.getPrimaryService('heart_rate');
+      var ch = await svc.getCharacteristic('heart_rate_measurement');
+      await ch.startNotifications();
+      ch.addEventListener('characteristicvaluechanged', function (e) {
+        setHr(parseHr(e.target.value));
+      });
+      hrDevice = device;
+      hrCell.classList.remove('disconnected');
+      hrCell.classList.add('connected');
+      setHr('--');
+      setStatus('');
+    } catch (err) {
+      // 用户取消选择设备时静默返回
+      if (err && err.name === 'NotFoundError') { setStatus(''); return; }
+      setStatus('蓝牙连接失败:' + (err && err.message ? err.message : '未知错误'));
+    }
+  }
+  hrCell.addEventListener('click', connectHr);
 
   // ---------- Wake Lock ----------
   async function requestWake() {
