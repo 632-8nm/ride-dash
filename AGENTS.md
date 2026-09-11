@@ -7,12 +7,22 @@
 - **仓库**:https://github.com/632-8nm/ride-dash
 - **目录结构**:
   ```
-  index.html        页面骨架(约 80 行,只含 DOM 结构)
-  css/style.css     应用样式
-  css/leaflet.css   Leaflet 1.9.4(本地 vendored,无 CDN 依赖)
-  js/app.js         全部业务逻辑(定位/计时/设置/心率/GPX)
-  js/leaflet.js     Leaflet 1.9.4
+  index.html          页面骨架(约 80 行,只含 DOM 结构)
+  css/style.css       应用样式(主题 CSS 变量在 :root 与 body[data-theme])
+  css/leaflet.css     Leaflet 1.9.4(本地 vendored,无 CDN 依赖)
+  js/main.js          入口:装配模块、开始/结束按钮、秒级 tick
+  js/state.js         骑行状态 + localStorage 断点续记 + resetCurrent
+  js/settings.js      应用设置(主题/单位/过滤/自动暂停)+ fmtSpeed
+  js/timer.js         计时引擎(flushActive/effMs)+ Wake Lock
+  js/geo.js           Haversine 球面距离
+  js/map.js           Leaflet 地图、GCJ-02 纠偏、轨迹线/蓝点
+  js/gps.js           watchPosition、漂移过滤、自动暂停判定
+  js/hr.js            BLE 心率(标准 0x180D 服务)
+  js/gpx.js           GPX 1.1 导出
+  js/settingsPanel.js 设置抽屉(上滑手势 + 设置项绑定)
+  js/leaflet.js       Leaflet 1.9.4(经典脚本,挂全局 L)
   ```
+- **模块规范**:ES Modules(`<script type="module" src="js/main.js">`),依赖须显式 import/export;依赖方向 `main → gps/hr/settingsPanel/gpx → map/ui/timer → settings/state/geo`,禁止成环。因此**必须经 HTTP(S) 访问**,`file://` 直接打开不工作
 - **技术栈**:原生 HTML/CSS/JS + Leaflet + 高德瓦片(显示用 GCJ-02 纠偏)+ Geolocation API + Web Bluetooth(心率)+ Wake Lock API + localStorage
 - **数据**:轨迹/距离/用时仅存手机 localStorage,不经过任何服务器;支持导出 GPX 1.1
 - **部署流程**:改动 → 提交推送 main → Pages 约 1 分钟后自动生效
