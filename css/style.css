@@ -1,0 +1,158 @@
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #0d1117; color: #e6edf3;
+    display: flex; flex-direction: column;
+    height: 100dvh;
+  }
+
+  /* 地图区 */
+  #map { flex: 1 1 auto; min-height: 0; background: #1a1f26; }
+  .map-status {
+    position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+    z-index: 1000; background: rgba(13,17,23,.8); color: #ffb84d;
+    padding: 4px 12px; border-radius: 12px; font-size: 12px; white-space: nowrap;
+  }
+  #btn-loc {
+    position: absolute; right: 12px; bottom: 18px; z-index: 1000;
+    width: 46px; height: 46px; border-radius: 50%;
+    background: rgba(13,17,23,.85); border: 1px solid #30363d; color: #e6edf3;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,.45); cursor: pointer; padding: 0;
+  }
+  #btn-loc:active { background: rgba(31,111,235,.9); }
+  #btn-loc svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* 仪表盘 */
+  #dash {
+    flex: 0 0 auto;
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 1px; background: #30363d;
+    border-top: 1px solid #30363d;
+  }
+  .cell {
+    background: #0d1117; padding: 10px 12px 8px;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .cell .label { font-size: 12px; color: #8b949e; }
+  .cell .value {
+    font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums;
+    line-height: 1.15; letter-spacing: -1px;
+  }
+  .cell .value .unit { font-size: 13px; font-weight: 400; color: #8b949e; letter-spacing: 0; }
+  #v-time { font-size: 28px; }
+  .cell.span-2 { grid-column: 1 / -1; }
+  #v-speed { font-size: 44px; }
+  #cell-hr { cursor: pointer; }
+  #cell-hr.disconnected .label::after { content: " · 点按连接"; color: #484f58; font-size: 11px; }
+  #cell-hr.connected .label { color: #ff6b6b; }
+
+  /* 按钮区 */
+  #controls {
+    flex: 0 0 auto;
+    display: flex; gap: 12px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    border-top: 1px solid #30363d; background: #0d1117;
+  }
+  button {
+    flex: 1; padding: 14px 0; font-size: 17px; font-weight: 600;
+    border: none; border-radius: 12px; color: #fff; cursor: pointer;
+  }
+  button:disabled { opacity: .35; }
+  #btn-start { background: #1f883d; }
+  #btn-start.recording { background: #b62324; }
+  #btn-end { background: #21262d; border: 1px solid #30363d; color: #e6edf3; }
+  #btn-full { flex: 0 0 52px; background: #21262d; border: 1px solid #30363d; color: #e6edf3; font-size: 18px; }
+
+  /* GPX 导出面板 */
+  #export-panel {
+    position: fixed; inset: 0; z-index: 2000;
+    background: rgba(0,0,0,.6); display: none;
+    align-items: center; justify-content: center;
+  }
+  #export-panel.show { display: flex; }
+  #export-panel .card {
+    background: #161b22; border: 1px solid #30363d; border-radius: 14px;
+    padding: 22px 26px; text-align: center; width: min(320px, 86vw);
+  }
+  #export-panel h3 { margin-bottom: 8px; font-size: 18px; }
+  #export-panel p { color: #8b949e; font-size: 13px; margin-bottom: 16px; }
+  #export-panel .row { display: flex; gap: 10px; }
+  #export-panel .row button { flex: 1; padding: 11px 0; font-size: 15px; }
+  #btn-gpx { background: #1f6feb; }
+  #btn-close { background: #21262d; border: 1px solid #30363d; color: #e6edf3; }
+
+  /* 全屏模式下压缩留白 */
+  :fullscreen #dash .cell, body:fullscreen #dash .cell { padding: 8px 12px 6px; }
+
+  .cell.span-2 { grid-column: 1 / -1; }
+  #v-speed { font-size: 44px; }
+  #cell-hr { cursor: pointer; }
+  #cell-hr.disconnected .label::after { content: " · 点按连接"; color: #484f58; font-size: 11px; }
+  #cell-hr.connected .label { color: #ff6b6b; }
+
+  /* 设置抽屉:上滑仪表盘呼出 */
+  #set-backdrop {
+    position: fixed; inset: 0; z-index: 1500;
+    background: rgba(0,0,0,.55); opacity: 0; pointer-events: none;
+    transition: opacity .25s;
+  }
+  #set-backdrop.show { opacity: 1; pointer-events: auto; }
+  #set-panel {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 1600;
+    background: #161b22; border-top: 1px solid #30363d;
+    border-radius: 16px 16px 0 0;
+    padding: 0 18px calc(16px + env(safe-area-inset-bottom));
+    transform: translateY(105%);
+    transition: transform .25s ease;
+    max-height: 80dvh; overflow-y: auto;
+  }
+  #set-panel.open { transform: translateY(0); }
+  .set-handle {
+    width: 40px; height: 4px; border-radius: 2px;
+    background: #484f58; margin: 8px auto 4px;
+  }
+  .set-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0 4px; font-size: 17px; font-weight: 600;
+  }
+  #set-close {
+    flex: 0 0 32px; padding: 6px 0; font-size: 14px;
+    background: #21262d; border: 1px solid #30363d; color: #8b949e; border-radius: 8px;
+  }
+  .set-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 13px 0; border-bottom: 1px solid #21262d; font-size: 15px;
+  }
+  .set-row.col { flex-direction: column; align-items: stretch; gap: 10px; }
+  .set-row .line { display: flex; justify-content: space-between; align-items: center; }
+  .set-row .line.small { font-size: 13px; color: #8b949e; gap: 14px; flex-wrap: wrap; }
+  .set-row .line.small input {
+    width: 52px; background: #0d1117; color: #e6edf3;
+    border: 1px solid #30363d; border-radius: 6px; padding: 4px 6px; font-size: 13px;
+  }
+  .set-row.action { color: #ff6b6b; justify-content: center; cursor: pointer; border-bottom: none; }
+  .set-ver { text-align: center; color: #484f58; font-size: 11px; padding-top: 10px; }
+
+  /* 开关 */
+  .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .switch i {
+    position: absolute; inset: 0; border-radius: 12px;
+    background: #30363d; transition: background .2s;
+  }
+  .switch i::before {
+    content: ""; position: absolute; left: 3px; top: 3px;
+    width: 18px; height: 18px; border-radius: 50%; background: #e6edf3;
+    transition: transform .2s;
+  }
+  .switch input:checked + i { background: #1f883d; }
+  .switch input:checked + i::before { transform: translateX(20px); }
+
+  /* 分段选择 */
+  .seg { display: flex; background: #0d1117; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; }
+  .seg button {
+    flex: none; padding: 6px 14px; font-size: 13px; font-weight: 400;
+    background: transparent; color: #8b949e; border-radius: 0;
+  }
+  .seg button.on { background: #1f6feb; color: #fff; font-weight: 600; }

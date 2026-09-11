@@ -2,14 +2,21 @@
 
 ## 项目信息
 
-- **项目**:骑行码表(网页版)——纯前端单文件应用,无后端
-- **核心文件**:`index.html`(HTML + CSS + JS 全部内置,含内联的 Leaflet 1.9.4)
+- **项目**:骑行码表(网页版)——纯前端静态应用,无后端、无构建步骤
 - **线上地址**:https://632-8nm.github.io/ride-dash/(GitHub Pages,main 分支根目录自动部署)
 - **仓库**:https://github.com/632-8nm/ride-dash
-- **技术栈**:Leaflet(已内联,无 CDN 依赖)+ 高德瓦片(显示用 GCJ-02 纠偏)+ Geolocation API + Wake Lock API + localStorage
+- **目录结构**:
+  ```
+  index.html        页面骨架(约 80 行,只含 DOM 结构)
+  css/style.css     应用样式
+  css/leaflet.css   Leaflet 1.9.4(本地 vendored,无 CDN 依赖)
+  js/app.js         全部业务逻辑(定位/计时/设置/心率/GPX)
+  js/leaflet.js     Leaflet 1.9.4
+  ```
+- **技术栈**:原生 HTML/CSS/JS + Leaflet + 高德瓦片(显示用 GCJ-02 纠偏)+ Geolocation API + Web Bluetooth(心率)+ Wake Lock API + localStorage
 - **数据**:轨迹/距离/用时仅存手机 localStorage,不经过任何服务器;支持导出 GPX 1.1
-- **辅助文件**:`serve-https.py`(本地 HTTPS 调试用,非必需)、`leaflet.js` / `leaflet.css`(内联源,留作升级)
-- **部署流程**:改 `index.html` → 提交推送 main → Pages 约 1 分钟后自动生效
+- **部署流程**:改动 → 提交推送 main → Pages 约 1 分钟后自动生效
+- **本地调试**:`python -m http.server 8765` 后访问 http://localhost:8765(定位权限仅 localhost/HTTPS 可用)
 
 ## Git 规则(必须遵守)
 
