@@ -39,16 +39,16 @@ function onFix(pos) {
   if (prev) {
     var d = haversine(prev.lat, prev.lng, pt.lat, pt.lng);
     var dtSeg = Math.min((now - prev.t) / 1000, 30);
-    // 距离优先用多普勒速度积分(位置噪声零均值正负抵消,精度远高于逐点差分);
+    // 距离:优先多普勒速度积分(位置噪声零均值正负抵消,不经过漂移门限);
     // speed 缺失时退回卡尔曼位置差分,并保留漂移门限
-    var added = null;
     if (speed != null && speed > -1 && speed < 30) {
-      added = speed * dtSeg;
+      state.distance += speed * dtSeg;
     } else if (d <= maxJump && d >= dynFilter) {
-      added = d;
+      state.distance += d;
     }
-    if (added != null) {
-      state.distance += added;
+    // 轨迹点:三档漂移过滤在这里生效——静止抖动点不入轨迹;
+    // 慢速骑行(>0.6 m/s)视为真实移动放行,陡坡慢骑不丢轨迹
+    if (d <= maxJump && (d >= dynFilter || speed > 0.6)) {
       state.points.push(pt);
       if (state.recording) state.ridePoints.push(pt);
       drawTrack();
