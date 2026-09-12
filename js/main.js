@@ -3,6 +3,7 @@ import { state, persist } from './state.js';
 import { flushActive, effMs, requestWake, releaseWake } from './timer.js';
 import { initGps } from './gps.js';
 import { drawTrack, map } from './map.js';
+import { checkForUpdate } from './version.js';
 import { setStatus, updateDash } from './ui.js';
 import { exportGpx } from './gpx.js';
 import './hr.js';
@@ -131,6 +132,10 @@ setInterval(function () {
 // ---------- 启动 ----------
 initGps();
 updateDash(); // 恢复的断点记录回显
+
+// 更新检查:启动即查一次,之后每 5 分钟一次
+checkForUpdate(true);
+setInterval(function () { checkForUpdate(true); }, 5 * 60 * 1000);
 
 // 首次使用提示(只提示一次)
 try {

@@ -4,7 +4,7 @@ import { state, resetCurrent } from './state.js';
 import { setStatus, updateDash } from './ui.js';
 import { releaseWake, requestWake } from './timer.js';
 import { drawTrack } from './map.js';
-import { APP_VERSION } from './version.js';
+import { APP_VERSION, checkForUpdate } from './version.js';
 import { parseGpx, loadRoute, clearRoute } from './route.js';
 
 // 版本页脚:单一来源 js/version.js
@@ -88,6 +88,13 @@ document.getElementById('set-clear').addEventListener('click', function () {
   resetCurrent();
   drawTrack(); updateDash();
   setStatus('记录已清除', 2000);
+});
+
+// ---------- 检查更新 ----------
+document.getElementById('update-state').textContent = '当前 v' + APP_VERSION;
+document.getElementById('set-update').addEventListener('click', function () {
+  setStatus('正在检查更新…', 2000);
+  checkForUpdate(false);
 });
 
 // ---------- 路书导航 ----------
