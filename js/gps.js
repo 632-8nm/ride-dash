@@ -1,23 +1,35 @@
-// GPS 定位:watchPosition + 漂移过滤 + 自动暂停判定
+// GPS 定位:watchPosition + 精度门槛 + 自适应漂移过滤 + 速度平滑 + 自动暂停判定
 import { state, persist } from './state.js';
-import { settings, filterDist, maxJump, fmtSpeed } from './settings.js';
+import { settings, filterDist, maxJump } from './settings.js';
 import { haversine } from './geo.js';
 import { wgs2gcj, updateMarker, drawTrack } from './map.js';
 import { setStatus, setSpeedDisplay, updateDash } from './ui.js';
 import { flushActive } from './timer.js';
 
+var ACC_MAX = 30;      // 精度半径超过该值(米)的定位点视为噪声,整点丢弃
+var ACC_FILTER = 0.8;  // 动态漂移阈值 = max(基准阈值, 精度半径 × 该系数)
+var SPEED_EMA = 0.3;   // 速度指数滑动平均系数:显示值 = 上次×(1-α) + 本次×α
+var emaKmh = null;     // 平滑后的实时速度
+
 function onFix(pos) {
   var lat = pos.coords.latitude, lng = pos.coords.longitude;
   var speed = pos.coords.speed; // m/s,可能为 null
+  var accuracy = pos.coords.accuracy; // 定位精度半径(米)
   var now = Date.now();
-  var pt = { lat: lat, lng: lng, t: now };
 
+  // 精度门槛:低质量定位点不进距离、不上轨迹,蓝点也不跳
+  if (accuracy != null && accuracy > ACC_MAX) return;
+
+  var pt = { lat: lat, lng: lng, t: now };
   updateMarker(lat, lng);
 
   var prev = state.lastFix;
+  // 动态漂移阈值:信号差时阈值自动放大
+  var dynFilter = Math.max(filterDist, (accuracy || 0) * ACC_FILTER);
+
   if (prev) {
     var d = haversine(prev.lat, prev.lng, lat, lng);
-    if (d <= maxJump && (d >= filterDist || speed > 0.6)) {
+    if (d <= maxJump && (d >= dynFilter || speed > 0.6)) {
       state.distance += d;
       state.points.push(pt);
       if (state.recording) state.ridePoints.push(pt);
@@ -31,22 +43,25 @@ function onFix(pos) {
   }
   state.lastFix = pt;
 
-  // 实时速度:优先 GPS 速度,退化为距离差分
+  // 实时速度:优先 GPS 速度(多普勒),退化为距离差分;再做 EMA 平滑
   var kmh = 0;
   if (speed != null && speed >= 0) kmh = speed * 3.6;
   else if (prev) {
     var dt = (now - prev.t) / 1000;
     if (dt > 0 && state.points.length > 1) kmh = haversine(prev.lat, prev.lng, lat, lng) / dt * 3.6;
   }
-  setSpeedDisplay(kmh);
+  // 定位间隔过长(刚恢复/信号中断)时直接采信本次值,避免旧值拖尾
+  if (emaKmh === null || !prev || now - prev.t > 10000) emaKmh = kmh;
+  else emaKmh = emaKmh * (1 - SPEED_EMA) + kmh * SPEED_EMA;
+  setSpeedDisplay(emaKmh);
 
-  // 自动暂停:低于停表阈值停计时,高于开表阈值恢复
+  // 自动暂停:用平滑后的速度判定,避免阈值附近来回跳
   if (settings.autoPause.on && state.recording) {
-    if (!state.autoPaused && kmh < settings.autoPause.below) {
+    if (!state.autoPaused && emaKmh < settings.autoPause.below) {
       flushActive();
       state.autoPaused = true;
       setStatus('已自动暂停(速度过低)', 3000);
-    } else if (state.autoPaused && kmh > settings.autoPause.above) {
+    } else if (state.autoPaused && emaKmh > settings.autoPause.above) {
       state.autoPaused = false;
       state.lastTick = Date.now();
       setStatus('已自动继续', 3000);
