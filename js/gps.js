@@ -1,8 +1,9 @@
-// GPS 定位:watchPosition + 精度门槛 + 自适应漂移过滤 + 速度平滑 + 自动暂停判定
+// GPS 定位:watchPosition + 精度门槛 + 卡尔曼滤波 + 自适应漂移过滤 + 速度平滑 + 自动暂停判定
 import { state, persist } from './state.js';
 import { settings, filterDist, maxJump } from './settings.js';
 import { haversine } from './geo.js';
-import { wgs2gcj, updateMarker, drawTrack } from './map.js';
+import { createKalman } from './kalman.js';
+import { updateMarker, drawTrack } from './map.js';
 import { setStatus, setSpeedDisplay, updateDash } from './ui.js';
 import { flushActive } from './timer.js';
 
@@ -10,6 +11,7 @@ var ACC_MAX = 30;      // 精度半径超过该值(米)的定位点视为噪声,
 var ACC_FILTER = 0.8;  // 动态漂移阈值 = max(基准阈值, 精度半径 × 该系数)
 var SPEED_EMA = 0.3;   // 速度指数滑动平均系数:显示值 = 上次×(1-α) + 本次×α
 var emaKmh = null;     // 平滑后的实时速度
+var kf = createKalman();
 
 function onFix(pos) {
   var lat = pos.coords.latitude, lng = pos.coords.longitude;
@@ -20,17 +22,28 @@ function onFix(pos) {
   // 精度门槛:低质量定位点不进距离、不上轨迹,蓝点也不跳
   if (accuracy != null && accuracy > ACC_MAX) return;
 
-  var pt = { lat: lat, lng: lng, t: now };
-  updateMarker(lat, lng);
+  // 卡尔曼滤波:后续距离/轨迹/GPX 全部使用滤波位置
+  var f = kf.filter(lat, lng, accuracy || 20, now);
+  var pt = { lat: f.lat, lng: f.lng, t: now };
+  updateMarker(pt.lat, pt.lng);
 
   var prev = state.lastFix;
   // 动态漂移阈值:信号差时阈值自动放大
   var dynFilter = Math.max(filterDist, (accuracy || 0) * ACC_FILTER);
 
   if (prev) {
-    var d = haversine(prev.lat, prev.lng, lat, lng);
-    if (d <= maxJump && (d >= dynFilter || speed > 0.6)) {
-      state.distance += d;
+    var d = haversine(prev.lat, prev.lng, pt.lat, pt.lng);
+    var dtSeg = Math.min((now - prev.t) / 1000, 30);
+    // 距离优先用多普勒速度积分(位置噪声零均值正负抵消,精度远高于逐点差分);
+    // speed 缺失时退回卡尔曼位置差分,并保留漂移门限
+    var added = null;
+    if (speed != null && speed > -1 && speed < 30) {
+      added = speed * dtSeg;
+    } else if (d <= maxJump && d >= dynFilter) {
+      added = d;
+    }
+    if (added != null) {
+      state.distance += added;
       state.points.push(pt);
       if (state.recording) state.ridePoints.push(pt);
       drawTrack();
@@ -48,7 +61,7 @@ function onFix(pos) {
   if (speed != null && speed >= 0) kmh = speed * 3.6;
   else if (prev) {
     var dt = (now - prev.t) / 1000;
-    if (dt > 0 && state.points.length > 1) kmh = haversine(prev.lat, prev.lng, lat, lng) / dt * 3.6;
+    if (dt > 0 && state.points.length > 1) kmh = haversine(prev.lat, prev.lng, pt.lat, pt.lng) / dt * 3.6;
   }
   // 定位间隔过长(刚恢复/信号中断)时直接采信本次值,避免旧值拖尾
   if (emaKmh === null || !prev || now - prev.t > 10000) emaKmh = kmh;
