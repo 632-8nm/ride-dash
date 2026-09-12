@@ -11,7 +11,9 @@ export const state = {
   lastFix: null,         // 上一个有效定位点
   wakeLock: null,
   lastTick: 0,           // 上次计费时刻,配合自动暂停
-  autoPaused: false      // 自动暂停中(速度低于阈值停表)
+  autoPaused: false,     // 自动暂停中(速度低于阈值停表)
+  altitude: null,        // 平滑后的当前海拔 m(GPS,可能无值)
+  ascent: 0              // 累计爬升 m(2 米迟滞过滤)
 };
 
 // localStorage 恢复(恢复后处于"暂停"态,可继续点开始)
@@ -23,6 +25,8 @@ try {
     state.activeMs = saved.activeMs || 0;
     state.started = saved.started || false;
     state.lastFix = saved.points[saved.points.length - 1] || null;
+    if (saved.altitude != null) state.altitude = saved.altitude;
+    if (saved.ascent) state.ascent = saved.ascent;
   }
 } catch (e) { /* 忽略损坏数据 */ }
 
@@ -32,7 +36,9 @@ export function persist() {
       points: state.points.slice(-2000), // 防止过大
       distance: state.distance,
       activeMs: state.activeMs,
-      started: state.started
+      started: state.started,
+      altitude: state.altitude,
+      ascent: state.ascent
     }));
   } catch (e) { /* 存储满则忽略 */ }
 }
@@ -42,4 +48,5 @@ export function resetCurrent() {
   localStorage.removeItem(SKEY);
   state.points = []; state.ridePoints = []; state.distance = 0;
   state.activeMs = 0; state.lastFix = null;
+  state.ascent = 0; // 当前海拔保留读数
 }

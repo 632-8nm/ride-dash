@@ -93,6 +93,9 @@ body {
 #cell-hr.disconnected .label::after { content: " · 点按连接"; color: var(--text-dim); font-size: 11px; }
 #cell-hr.connected .label { color: var(--hr-red); }
 
+/* 扩展数据格:仅大字模式显示,主页不占位 */
+.cell.extra { display: none; }
+
 /* 按钮区 */
 #controls {
   flex: 0 0 auto;
@@ -108,6 +111,17 @@ button:disabled { opacity: .35; }
 #btn-start.recording { background: var(--danger); }
 #btn-end { background: var(--bg-inset); border: 1px solid var(--border); color: var(--text); }
 #btn-full { flex: 0 0 52px; background: var(--bg-inset); border: 1px solid var(--border); color: var(--text); font-size: 18px; }
+
+/* 大字模式:收起地图,仪表盘占满并放大 */
+body.big-mode #map { display: none; }
+body.big-mode #dash { flex: 1 1 auto; grid-auto-rows: 1fr; }
+body.big-mode .cell { justify-content: center; gap: 2px; }
+body.big-mode .cell .label { font-size: 14px; }
+body.big-mode .cell .value { font-size: 40px; }
+body.big-mode .cell .value .unit { font-size: 16px; }
+body.big-mode #v-speed { font-size: clamp(60px, 17vh, 120px); }
+body.big-mode #v-time { font-size: 38px; }
+body.big-mode .cell.extra { display: flex; }
 
 /* GPX 导出面板 */
 #export-panel {

@@ -34,4 +34,6 @@ export function updateDash() {
   var mm = String(Math.floor(s % 3600 / 60)).padStart(2, '0');
   var ss = String(s % 60).padStart(2, '0');
   document.getElementById('v-time').textContent = hh + ':' + mm + ':' + ss;
+  document.getElementById('v-ascent').innerHTML = Math.round(state.ascent) + '<span class="unit"> m</span>';
+  document.getElementById('v-alt').innerHTML = (state.altitude != null ? Math.round(state.altitude) : '--') + '<span class="unit"> m</span>';
 }

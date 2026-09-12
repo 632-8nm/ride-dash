@@ -11,7 +11,11 @@ import { updatePosition as updateRoutePos } from './route.js';
 var ACC_MAX = 30;      // 精度半径超过该值(米)的定位点视为噪声,整点丢弃
 var ACC_FILTER = 0.8;  // 动态漂移阈值 = max(基准阈值, 精度半径 × 该系数)
 var SPEED_EMA = 0.3;   // 速度指数滑动平均系数:显示值 = 上次×(1-α) + 本次×α
+var ALT_EMA = 0.15;    // 海拔平滑系数(约 6 秒时间常数)
+var ASCENT_HYS = 2;    // 爬升迟滞:平滑海拔较标记高出该值才计入爬升
 var emaKmh = null;     // 平滑后的实时速度
+var altEma = null;     // 平滑后的海拔
+var altMark = null;    // 爬升迟滞标记
 var kf = createKalman();
 
 function onFix(pos) {
@@ -56,6 +60,20 @@ function onFix(pos) {
     drawTrack();
   }
   state.lastFix = pt;
+
+  // 海拔:EMA 平滑;爬升用迟滞累计,只有比标记高出 ASCENT_HYS 才计入
+  var rawAlt = pos.coords.altitude;
+  if (rawAlt != null && !isNaN(rawAlt)) {
+    if (altEma === null) { altEma = rawAlt; altMark = rawAlt; }
+    else altEma = altEma * (1 - ALT_EMA) + rawAlt * ALT_EMA;
+    if (altEma - altMark >= ASCENT_HYS) {
+      state.ascent += altEma - altMark;
+      altMark = altEma;
+    } else if (altEma < altMark - ASCENT_HYS) {
+      altMark = altEma; // 下坡重置标记,不产生负爬升
+    }
+    state.altitude = altEma;
+  }
 
   // 路书导航:偏航/进度
   updateRoutePos(pt.lat, pt.lng);
