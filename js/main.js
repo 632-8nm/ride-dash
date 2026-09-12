@@ -66,46 +66,29 @@ document.getElementById('btn-full').addEventListener('click', function () {
   else document.documentElement.requestFullscreen().catch(function () {});
 });
 
-// ---------- 大字模式:数据条上左滑进入(纯数据页),右滑返回地图主页 ----------
-function setBigMode(on) {
-  document.body.classList.toggle('big-mode', on);
-  try { localStorage.setItem('ride-dash-big', on ? '1' : '0'); } catch (e) {}
-  // 地图容器从 display:none 恢复后尺寸变了,需要让 Leaflet 重算
-  if (!on) setTimeout(function () { map.invalidateSize(); }, 60);
-  else {
-    try {
-      if (!localStorage.getItem('ride-dash-big-hint')) {
-        localStorage.setItem('ride-dash-big-hint', '1');
-        setStatus('提示:右滑数据区返回地图', 5000);
-      }
-    } catch (e) {}
+// ---------- 视图切换:底部标签栏(地图 / 数据 / 设置) ----------
+var VKEY = 'ride-dash-view';
+var tabButtons = document.querySelectorAll('#tabbar .tab');
+
+function setView(name) {
+  document.body.classList.toggle('view-data', name === 'data');
+  document.body.classList.toggle('view-settings', name === 'settings');
+  for (var i = 0; i < tabButtons.length; i++) {
+    tabButtons[i].classList.toggle('active', tabButtons[i].getAttribute('data-view') === name);
   }
+  try { localStorage.setItem(VKEY, name); } catch (e) {}
+  // 地图容器从 display:none 恢复后尺寸变了,需要让 Leaflet 重算
+  if (name === 'map') setTimeout(function () { map.invalidateSize(); }, 60);
 }
-
-// 手势识别:横滑切大字/回主页(触摸 + 鼠标拖动通用);竖滑留给设置抽屉
-var dashEl = document.getElementById('dash');
-var gStart = null, gAxis = null;
-function gDown(x, y) { gStart = { x: x, y: y }; gAxis = null; }
-function gMove(x, y) {
-  if (!gStart) return;
-  var dx = x - gStart.x, dy = y - gStart.y;
-  if (!gAxis && (Math.abs(dx) > 12 || Math.abs(dy) > 12)) gAxis = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v';
+for (var ti = 0; ti < tabButtons.length; ti++) {
+  (function (btn) {
+    btn.addEventListener('click', function () { setView(btn.getAttribute('data-view')); });
+  })(tabButtons[ti]);
 }
-function gUp(x) {
-  if (!gStart || gAxis !== 'h') { gStart = null; return; }
-  var dx = x - gStart.x;
-  gStart = null;
-  if (dx < -60 && !document.body.classList.contains('big-mode')) setBigMode(true);
-  else if (dx > 60 && document.body.classList.contains('big-mode')) setBigMode(false);
-}
-dashEl.addEventListener('touchstart', function (e) { gDown(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
-dashEl.addEventListener('touchmove', function (e) { gMove(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
-dashEl.addEventListener('touchend', function (e) { gUp(e.changedTouches[0].clientX); });
-dashEl.addEventListener('mousedown', function (e) { gDown(e.clientX, e.clientY); });
-dashEl.addEventListener('mousemove', function (e) { if (gStart) gMove(e.clientX, e.clientY); });
-window.addEventListener('mouseup', function (e) { if (gStart) gUp(e.clientX); });
-
-try { if (localStorage.getItem('ride-dash-big') === '1') setBigMode(true); } catch (e) {}
+try {
+  var savedView = localStorage.getItem(VKEY);
+  if (savedView === 'data' || savedView === 'settings') setView(savedView);
+} catch (e) {}
 
 // ---------- 秒级刷新 ----------
 setInterval(function () {

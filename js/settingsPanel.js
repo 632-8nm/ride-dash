@@ -1,4 +1,4 @@
-// 设置抽屉:上滑仪表盘呼出(跟手),桌面双击等效
+// 设置页:设置项绑定与路书导入(页面切换由 main.js 的底部标签栏负责)
 import { settings, saveSettings, applyTheme, applyFilterPreset } from './settings.js';
 import { state, resetCurrent } from './state.js';
 import { setStatus, updateDash } from './ui.js';
@@ -9,52 +9,7 @@ import { parseGpx, loadRoute, clearRoute } from './route.js';
 
 // 版本页脚:单一来源 js/version.js
 document.getElementById('set-ver').textContent =
-  'ride-dash v' + APP_VERSION + ' · 上滑仪表盘可打开此页 · 数据仅存本机';
-
-var setPanel = document.getElementById('set-panel');
-var setBackdrop = document.getElementById('set-backdrop');
-var setOpen = false;
-
-export function openSettings() {
-  setOpen = true;
-  setPanel.style.transform = '';
-  setPanel.classList.add('open');
-  setBackdrop.classList.add('show');
-}
-function closeSettings() {
-  setOpen = false;
-  setPanel.style.transform = '';
-  setPanel.classList.remove('open');
-  setBackdrop.classList.remove('show');
-}
-document.getElementById('set-close').addEventListener('click', closeSettings);
-setBackdrop.addEventListener('click', closeSettings);
-
-// 上滑仪表盘呼出(跟手);桌面双击仪表盘同样可开
-var dashEl = document.getElementById('dash');
-var swipeY = null, dragPx = 0;
-dashEl.addEventListener('touchstart', function (e) {
-  if (setOpen) return;
-  swipeY = e.touches[0].clientY;
-  dragPx = 0;
-  setPanel.style.transition = 'none';
-}, { passive: true });
-dashEl.addEventListener('touchmove', function (e) {
-  if (swipeY === null || setOpen) return;
-  var dy = swipeY - e.touches[0].clientY;
-  if (dy <= 0) { dragPx = 0; return; }
-  dragPx = Math.min(dy, 180);
-  e.preventDefault();
-  setPanel.style.transform = 'translateY(calc(105% - ' + dragPx + 'px))';
-}, { passive: false });
-dashEl.addEventListener('touchend', function () {
-  if (swipeY === null) return;
-  setPanel.style.transition = '';
-  if (dragPx > 70) openSettings();
-  else setPanel.style.transform = '';
-  swipeY = null; dragPx = 0;
-});
-dashEl.addEventListener('dblclick', function () { openSettings(); });
+  'ride-dash v' + APP_VERSION + ' · 数据仅存本机';
 
 // ---------- 设置项绑定 ----------
 var setWake = document.getElementById('set-wake');
@@ -132,7 +87,6 @@ document.getElementById('set-clear').addEventListener('click', function () {
   document.getElementById('btn-end').disabled = true;
   resetCurrent();
   drawTrack(); updateDash();
-  closeSettings();
   setStatus('记录已清除', 2000);
 });
 

@@ -20,7 +20,7 @@
   js/hr.js            BLE 心率(标准 0x180D 服务)
   js/gpx.js           GPX 1.1 导出
   js/route.js         路书导航(GPX 导入、偏航判定、剩余里程)
-  js/settingsPanel.js 设置抽屉(上滑手势 + 设置项绑定)
+  js/settingsPanel.js 设置页(设置项绑定 + 路书导入)
   js/leaflet.js       Leaflet 1.9.4(经典脚本,挂全局 L)
   ```
 - **模块规范**:ES Modules(`<script type="module" src="js/main.js">`),依赖须显式 import/export;依赖方向 `main → gps/hr/settingsPanel/gpx → map/ui/timer → settings/state/geo`,禁止成环。因此**必须经 HTTP(S) 访问**,`file://` 直接打开不工作

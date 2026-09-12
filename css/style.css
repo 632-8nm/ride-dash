@@ -113,15 +113,15 @@ button:disabled { opacity: .35; }
 #btn-full { flex: 0 0 52px; background: var(--bg-inset); border: 1px solid var(--border); color: var(--text); font-size: 18px; }
 
 /* 大字模式:收起地图,仪表盘占满并放大 */
-body.big-mode #map { display: none; }
-body.big-mode #dash { flex: 1 1 auto; grid-auto-rows: 1fr; }
-body.big-mode .cell { justify-content: center; gap: 2px; }
-body.big-mode .cell .label { font-size: 14px; }
-body.big-mode .cell .value { font-size: 40px; }
-body.big-mode .cell .value .unit { font-size: 16px; }
-body.big-mode #v-speed { font-size: clamp(60px, 17vh, 120px); }
-body.big-mode #v-time { font-size: 38px; }
-body.big-mode .cell.extra { display: flex; }
+body.view-data #map { display: none; }
+body.view-data #dash { flex: 1 1 auto; grid-auto-rows: 1fr; }
+body.view-data .cell { justify-content: center; gap: 2px; }
+body.view-data .cell .label { font-size: 14px; }
+body.view-data .cell .value { font-size: 40px; }
+body.view-data .cell .value .unit { font-size: 16px; }
+body.view-data #v-speed { font-size: clamp(60px, 17vh, 120px); }
+body.view-data #v-time { font-size: 38px; }
+body.view-data .cell.extra { display: flex; }
 
 /* GPX 导出面板 */
 #export-panel {
@@ -144,35 +144,17 @@ body.big-mode .cell.extra { display: flex; }
 /* 全屏模式下压缩留白 */
 :fullscreen #dash .cell, body:fullscreen #dash .cell { padding: 8px 12px 6px; }
 
-/* 设置抽屉:上滑仪表盘呼出 */
-#set-backdrop {
-  position: fixed; inset: 0; z-index: 1500;
-  background: var(--backdrop); opacity: 0; pointer-events: none;
-  transition: opacity .25s;
+/* 视图切换 */
+body.view-data #map, body.view-settings #map, body.view-settings #dash { display: none; }
+body.view-data #dash { display: grid; }
+body.view-settings #view-settings { display: flex; }
+
+/* 设置页 */
+#view-settings {
+  display: none; flex: 1 1 auto; flex-direction: column;
+  overflow-y: auto; padding: 0 18px calc(16px + env(safe-area-inset-bottom));
 }
-#set-backdrop.show { opacity: 1; pointer-events: auto; }
-#set-panel {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 1600;
-  background: var(--bg-panel); border-top: 1px solid var(--border);
-  border-radius: 16px 16px 0 0;
-  padding: 0 18px calc(16px + env(safe-area-inset-bottom));
-  transform: translateY(105%);
-  transition: transform .25s ease;
-  max-height: 80dvh; overflow-y: auto;
-}
-#set-panel.open { transform: translateY(0); }
-.set-handle {
-  width: 40px; height: 4px; border-radius: 2px;
-  background: var(--text-dim); margin: 8px auto 4px;
-}
-.set-head {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 8px 0 4px; font-size: 17px; font-weight: 600;
-}
-#set-close {
-  flex: 0 0 32px; padding: 6px 0; font-size: 14px;
-  background: var(--bg-inset); border: 1px solid var(--border); color: var(--text-sec); border-radius: 8px;
-}
+.set-head { padding: 14px 0 4px; font-size: 17px; font-weight: 600; }
 .set-row {
   display: flex; justify-content: space-between; align-items: center;
   padding: 13px 0; border-bottom: 1px solid var(--bg-inset); font-size: 15px;
@@ -184,17 +166,32 @@ body.big-mode .cell.extra { display: flex; }
   width: 52px; background: var(--bg); color: var(--text);
   border: 1px solid var(--border); border-radius: 6px; padding: 4px 6px; font-size: 13px;
 }
-  .set-row.action { color: var(--hr-red); justify-content: center; cursor: pointer; border-bottom: none; }
-  .set-ver { text-align: center; color: var(--text-dim); font-size: 11px; padding-top: 10px; }
+.set-row.action { color: var(--hr-red); justify-content: center; cursor: pointer; border-bottom: none; }
+.set-ver { text-align: center; color: var(--text-dim); font-size: 11px; padding-top: 10px; }
+#route-info { font-size: 12px; color: var(--text-sec); }
+button.mini {
+  flex: none; padding: 7px 14px; font-size: 13px; font-weight: 400;
+  background: var(--bg-inset); border: 1px solid var(--border); color: var(--text);
+  border-radius: 8px;
+}
+button.mini:active { background: var(--accent-blue); }
 
-  /* 路书导航 */
-  #route-info { font-size: 12px; color: var(--text-sec); }
-  button.mini {
-    flex: none; padding: 7px 14px; font-size: 13px; font-weight: 400;
-    background: var(--bg-inset); border: 1px solid var(--border); color: var(--text);
-    border-radius: 8px;
-  }
-  button.mini:active { background: var(--accent-blue); }
+/* 底部标签栏 */
+#tabbar {
+  flex: 0 0 auto; display: flex;
+  border-top: 1px solid var(--border); background: var(--bg);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+#tabbar .tab {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 6px 0 4px; border-radius: 0;
+  background: transparent; color: var(--text-sec);
+  font-size: 11px; font-weight: 400; border-right: 1px solid var(--border);
+}
+#tabbar .tab:last-child { border-right: none; }
+#tabbar .tab .tab-ico { font-size: 18px; line-height: 1.2; display: flex; align-items: center; justify-content: center; }
+#tabbar .tab .tab-ico svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+#tabbar .tab.active { color: var(--accent-blue); font-weight: 600; }
 
 /* 开关 */
 .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
