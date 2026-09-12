@@ -10,6 +10,22 @@ L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scal
 }).addTo(map);
 var marker = null;
 var trackLine = L.polyline([], { color: '#1f6feb', weight: 4 }).addTo(map);
+var routeLine = null;
+
+// 路书路线:橙色虚线,和实测轨迹(蓝色实线)区分
+export function setRouteLine(ptsWgs) {
+  clearRouteLine();
+  routeLine = L.polyline(ptsWgs.map(function (p) {
+    var c = wgs2gcj(p.lat, p.lng);
+    return [c[0], c[1]];
+  }), { color: '#ff9f1a', weight: 5, opacity: 0.85, dashArray: '10 8' }).addTo(map);
+}
+export function clearRouteLine() {
+  if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+}
+export function fitRouteLine() {
+  if (routeLine) map.fitBounds(routeLine.getBounds(), { padding: [30, 30] });
+}
 
 // WGS-84 → GCJ-02 标准纠偏算法
 function outOfChina(lat, lng) {

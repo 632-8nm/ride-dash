@@ -19,6 +19,7 @@
   js/gps.js           watchPosition、漂移过滤、自动暂停判定
   js/hr.js            BLE 心率(标准 0x180D 服务)
   js/gpx.js           GPX 1.1 导出
+  js/route.js         路书导航(GPX 导入、偏航判定、剩余里程)
   js/settingsPanel.js 设置抽屉(上滑手势 + 设置项绑定)
   js/leaflet.js       Leaflet 1.9.4(经典脚本,挂全局 L)
   ```

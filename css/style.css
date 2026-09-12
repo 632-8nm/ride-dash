@@ -170,8 +170,17 @@ button:disabled { opacity: .35; }
   width: 52px; background: var(--bg); color: var(--text);
   border: 1px solid var(--border); border-radius: 6px; padding: 4px 6px; font-size: 13px;
 }
-.set-row.action { color: var(--hr-red); justify-content: center; cursor: pointer; border-bottom: none; }
-.set-ver { text-align: center; color: var(--text-dim); font-size: 11px; padding-top: 10px; }
+  .set-row.action { color: var(--hr-red); justify-content: center; cursor: pointer; border-bottom: none; }
+  .set-ver { text-align: center; color: var(--text-dim); font-size: 11px; padding-top: 10px; }
+
+  /* 路书导航 */
+  #route-info { font-size: 12px; color: var(--text-sec); }
+  button.mini {
+    flex: none; padding: 7px 14px; font-size: 13px; font-weight: 400;
+    background: var(--bg-inset); border: 1px solid var(--border); color: var(--text);
+    border-radius: 8px;
+  }
+  button.mini:active { background: var(--accent-blue); }
 
 /* 开关 */
 .switch { position: relative; display: inline-block; width: 44px; height: 24px; }

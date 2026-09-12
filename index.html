@@ -66,8 +66,19 @@
       <span>高于 <input type="number" id="set-ap-above" min="0" max="30" step="0.5"> km/h 开表</span>
     </div>
   </div>
+  <div class="set-row col">
+    <div class="line">
+      <span>路书导航</span>
+      <span id="route-info">未导入</span>
+    </div>
+    <div class="line small">
+      <button class="mini" id="route-import">导入 GPX 路书</button>
+      <button class="mini" id="route-clear">清除路书</button>
+    </div>
+  </div>
+  <input type="file" id="route-file" accept=".gpx,application/gpx+xml" hidden>
   <div class="set-row action" id="set-clear">清除当前记录</div>
-  <div class="set-ver">ride-dash v1.1 · 上滑仪表盘可打开此页 · 数据仅存本机</div>
+  <div class="set-ver" id="set-ver">ride-dash · 上滑仪表盘可打开此页 · 数据仅存本机</div>
 </div>
 
 <div id="export-panel">

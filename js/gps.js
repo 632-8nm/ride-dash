@@ -6,6 +6,7 @@ import { createKalman } from './kalman.js';
 import { updateMarker, drawTrack } from './map.js';
 import { setStatus, setSpeedDisplay, updateDash } from './ui.js';
 import { flushActive } from './timer.js';
+import { updatePosition as updateRoutePos } from './route.js';
 
 var ACC_MAX = 30;      // 精度半径超过该值(米)的定位点视为噪声,整点丢弃
 var ACC_FILTER = 0.8;  // 动态漂移阈值 = max(基准阈值, 精度半径 × 该系数)
@@ -55,6 +56,9 @@ function onFix(pos) {
     drawTrack();
   }
   state.lastFix = pt;
+
+  // 路书导航:偏航/进度
+  updateRoutePos(pt.lat, pt.lng);
 
   // 实时速度:优先 GPS 速度(多普勒),退化为距离差分;再做 EMA 平滑
   var kmh = 0;

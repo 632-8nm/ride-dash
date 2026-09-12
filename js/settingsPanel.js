@@ -4,6 +4,12 @@ import { state, resetCurrent } from './state.js';
 import { setStatus, updateDash } from './ui.js';
 import { releaseWake, requestWake } from './timer.js';
 import { drawTrack } from './map.js';
+import { APP_VERSION } from './version.js';
+import { parseGpx, loadRoute, clearRoute } from './route.js';
+
+// 版本页脚:单一来源 js/version.js
+document.getElementById('set-ver').textContent =
+  'ride-dash v' + APP_VERSION + ' · 上滑仪表盘可打开此页 · 数据仅存本机';
 
 var setPanel = document.getElementById('set-panel');
 var setBackdrop = document.getElementById('set-backdrop');
@@ -128,4 +134,30 @@ document.getElementById('set-clear').addEventListener('click', function () {
   drawTrack(); updateDash();
   closeSettings();
   setStatus('记录已清除', 2000);
+});
+
+// ---------- 路书导航 ----------
+var routeFile = document.getElementById('route-file');
+document.getElementById('route-import').addEventListener('click', function () {
+  routeFile.click();
+});
+routeFile.addEventListener('change', function () {
+  var file = routeFile.files[0];
+  routeFile.value = ''; // 清空以便可重复选择同一文件
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function () {
+    try {
+      var g = parseGpx(reader.result, file.name.replace(/\.gpx$/i, ''));
+      loadRoute(g.name, g.pts);
+    } catch (e) {
+      setStatus('路书导入失败:' + e.message, 4000);
+    }
+  };
+  reader.onerror = function () { setStatus('路书文件读取失败', 3000); };
+  reader.readAsText(file);
+});
+document.getElementById('route-clear').addEventListener('click', function () {
+  clearRoute();
+  setStatus('路书已清除', 2000);
 });

@@ -6,7 +6,7 @@ export const settings = {
   theme: 'dark',                               // dark | light
   unit: 'kmh',                                 // kmh | mph
   filter: 'std',                               // loose | std | strict
-  autoPause: { on: false, below: 2, above: 5 } // km/h,低于停表、高于开表
+    autoPause: { on: true, below: 2, above: 5 }  // km/h,低于停表、高于开表(默认开启)
 };
 
 try {
