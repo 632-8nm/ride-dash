@@ -90,6 +90,38 @@ try {
   if (savedView === 'data' || savedView === 'settings') setView(savedView);
 } catch (e) {}
 
+// ---------- 左右滑切换页面:地图 → 数据 → 设置(地图页滑底部数据条) ----------
+var ORDER = ['map', 'data', 'settings'];
+var sStart = null, sAxis = null;
+function sDown(x, y) { sStart = { x: x, y: y }; sAxis = null; }
+function sMove(x, y) {
+  if (!sStart) return;
+  var dx = x - sStart.x, dy = y - sStart.y;
+  if (!sAxis && (Math.abs(dx) > 12 || Math.abs(dy) > 12)) sAxis = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v';
+}
+function sUp(x) {
+  if (!sStart || sAxis !== 'h') { sStart = null; return; }
+  var dx = x - sStart.x;
+  sStart = null;
+  var cur = ORDER.indexOf(document.querySelector('#tabbar .tab.active').getAttribute('data-view'));
+  if (cur === -1) return;
+  if (dx < -60 && cur < ORDER.length - 1) setView(ORDER[cur + 1]);
+  else if (dx > 60 && cur > 0) setView(ORDER[cur - 1]);
+}
+// 数据条(地图页的底条、数据页的整个面板)与设置页都接入横滑
+var swipeEls = [document.getElementById('dash'), document.getElementById('view-settings')];
+for (var si = 0; si < swipeEls.length; si++) {
+  (function (el) {
+    if (!el) return;
+    el.addEventListener('touchstart', function (e) { sDown(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+    el.addEventListener('touchmove', function (e) { sMove(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+    el.addEventListener('touchend', function (e) { sUp(e.changedTouches[0].clientX); });
+    el.addEventListener('mousedown', function (e) { sDown(e.clientX, e.clientY); });
+    el.addEventListener('mousemove', function (e) { if (sStart) sMove(e.clientX, e.clientY); });
+  })(swipeEls[si]);
+}
+window.addEventListener('mouseup', function (e) { if (sStart) sUp(e.clientX); });
+
 // ---------- 秒级刷新 ----------
 setInterval(function () {
   if (state.recording && !state.autoPaused) flushActive();

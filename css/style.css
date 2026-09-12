@@ -114,7 +114,7 @@ button:disabled { opacity: .35; }
 
 /* 大字模式:收起地图,仪表盘占满并放大 */
 body.view-data #map { display: none; }
-body.view-data #dash { flex: 1 1 auto; grid-auto-rows: 1fr; }
+body.view-data #dash { flex: 1 1 0; min-height: 0; overflow: hidden; grid-auto-rows: 1fr; }
 body.view-data .cell { justify-content: center; gap: 2px; }
 body.view-data .cell .label { font-size: 14px; }
 body.view-data .cell .value { font-size: 40px; }
